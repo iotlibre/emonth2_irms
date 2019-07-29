@@ -1,0 +1,43 @@
+/* 
+Modificaciones a la libreria emonlib en emonlib.cpp
+/*
+
+double EnergyMonitor::calcIrms(unsigned int Number_of_Samples)
+{
+
+  #if defined emonTxV3
+    int SupplyVoltage=3300;
+  #else
+    int SupplyVoltage = readVcc();
+  #endif
+
+  offsetI = analogRead(17);
+  // Serial.println(millis());
+
+  for (unsigned int n = 0; n < Number_of_Samples; n++)
+  {
+    sampleI = analogRead(inPinI);
+
+    // Digital low pass filter extracts the 2.5 V or 1.65 V dc offset,
+    //  then subtract this - signal is now centered on 0 counts.
+    // offsetI = (offsetI + (sampleI-offsetI)/1024);
+    // offsetI = analogRead(17);
+    filteredI = sampleI - offsetI;
+
+    // Root-mean-square method current
+    // 1) square current values
+    sqI = filteredI * filteredI;
+    // 2) sum
+    sumI += sqI;
+  }
+  // Serial.println(millis());
+
+  double I_RATIO = ICAL *((SupplyVoltage/1000.0) / (ADC_COUNTS));
+  Irms = I_RATIO * sqrt(sumI / Number_of_Samples);
+
+  //Reset accumulators
+  sumI = 0;
+  //--------------------------------------------------------------------------------------
+
+  return Irms;
+}
